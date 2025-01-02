@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workday & Full-Day Tracker with Pie Charts</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 5%;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .tracker {
+      margin: 20px 0;
+    }
+    .progress-bar-container {
+      width: 80%;
+      height: 25px;
+      background-color: #ddd;
+      margin: 10px auto;
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background-color: #007BFF;
+      transition: width 0.5s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .workday .progress-bar {
+      background-color: #28A745;
+    }
+    .percentage {
+      margin-top: 5px;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    canvas {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Live Workday and Full-Day Tracker with Pie Charts</h1>
+
+  <div class="tracker workday">
+    <h2>Workday Progress</h2>
+    <canvas id="workdayPie" width="150" height="150"></canvas>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="workdayProgressBar"></div>
+    </div>
+    <div class="percentage" id="workdayPercentage"></div>
+  </div>
+
+  <div class="tracker full-day">
+    <h2>Full-Day Progress</h2>
+    <canvas id="fullDayPie" width="150" height="150"></canvas>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="fullDayProgressBar"></div>
+    </div>
+    <div class="percentage" id="fullDayPercentage"></div>
+  </div>
+
+  <script>
+    function getPercentage(startTime, endTime) {
+      const now = new Date();
+      if (now < startTime) {
+        return 0;
+      } else if (now > endTime) {
+        return 100;
+      }
+      const totalSeconds = (endTime - startTime) / 1000;
+      const secondsPassed = (now - startTime) / 1000;
+      return (secondsPassed / totalSeconds) * 100;
+    }
+
+    function drawPieChart(canvasId, percentage, color) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const radius = canvas.width / 2;
+      const endAngle = (percentage / 100) * 2 * Math.PI;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background circle
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius - 5, 0, 2 * Math.PI);
+      ctx.fillStyle = "#ddd";
+      ctx.fill();
+
+      // Draw progress circle
+      ctx.beginPath();
+      ctx.moveTo(radius, radius);
+      ctx.arc(radius, radius, radius - 5, 0, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Draw center white circle (for donut effect)
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius / 1.5, 0, 2 * Math.PI);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+    }
+
+    function updateProgressBarsAndCharts() {
+      const now = new Date();
+
+      // Workday progress
+      const workStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0); // 9:00 AM
+      const workEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 30, 0); // 5:30 PM
+      const workdayProgress = getPercentage(workStart, workEnd);
+
+      const workdayBar = document.getElementById("workdayProgressBar");
+      const workdayPercentage = document.getElementById("workdayPercentage");
+      workdayBar.style.width = workdayProgress + "%";
+      workdayPercentage.textContent =
+        workdayProgress === 0
+          ? "Workday hasn't started yet!"
+          : workdayProgress === 100
+          ? "Workday is over!"
+          : workdayProgress.toFixed(2) + "%";
+
+      drawPieChart("workdayPie", workdayProgress, "#28A745");
+
+      // Full-day progress
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0); // Midnight
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59); // 11:59 PM
+      const fullDayProgress = getPercentage(startOfDay, endOfDay);
+
+      const fullDayBar = document.getElementById("fullDayProgressBar");
+      const fullDayPercentage = document.getElementById("fullDayPercentage");
+      fullDayBar.style.width = fullDayProgress + "%";
+      fullDayPercentage.textContent = fullDayProgress.toFixed(2) + "%";
+
+      drawPieChart("fullDayPie", fullDayProgress, "#007BFF");
+    }
+
+    // Update every second
+    setInterval(updateProgressBarsAndCharts, 1000);
+
+    // Initial call
+    updateProgressBarsAndCharts();
+  </script>
+</body>
+</html>
